@@ -1,5 +1,8 @@
 import unittest
 from bcloader import *
+import scipy
+import numpy
+import collections
 
 
 class TestSequentialInput(unittest.TestCase):
@@ -38,6 +41,42 @@ class TestSequentialInput(unittest.TestCase):
         
         self.assertTrue(result)
 
+    def test_input_types(self):
+        """
+           https://github.com/kimiyoung/planetoid
+
+           Transductive learning
+           The input to the transductive model contains:
+
+           x, the feature vectors of the training instances,
+           y, the one-hot labels of the training instances,
+           graph, a dict in the format {index: [index_of_neighbor_nodes]}, where the neighbor nodes are organized as a list.
+           The current version only supports binary graphs.
+           Let L be the number of training instances. The indices in graph from 0 to L - 1 must correspond to the training
+           instances, with the same order as in x.
+           """
+        # x
+        result = True
+        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.x')
+        if type(object_) != scipy.sparse.csr.csr_matrix:
+            result = False
+        # tx
+        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.tx')
+        if type(object_) != scipy.sparse.csr.csr_matrix:
+            result = False
+        # y
+        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.y')
+        if type(object_) != numpy.ndarray:
+            result = False
+        # ty
+        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.ty')
+        if type(object_) != numpy.ndarray:
+            result = False
+        # graph
+        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.graph')
+        if type(object_) != collections.defaultdict:
+            result = False
+        self.assertTrue(result)
 
 if __name__ == '__main__':
     unittest.main()

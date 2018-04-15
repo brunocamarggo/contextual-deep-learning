@@ -3,6 +3,7 @@ from os.path import isfile, join
 import xmlparser
 from igraph import *
 import config
+import pickle
 
 BOUND_BOX_PATH = config.paths['BOUND_BOX_PATH']
 XML_DIR = config.paths['XML_DIR']
@@ -51,6 +52,14 @@ def load_graph_labels(graph_file=GRAPH_FILE):
     graph = Graph.Read_GraphMLz(graph_file)
     print('\t[DONE]')
     return graph.vs['label']
+
+def load_object(object_path=None):
+    """
+    Loads an objects in pickle format.
+    """
+    with open(object_path, 'rb') as input_:
+        graph_dict = pickle.load(input_)
+        return graph_dict
 
         
 

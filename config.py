@@ -5,3 +5,6 @@ paths = dict(
     GRAPH_FILE='/home/bruno/Dropbox/utfpr/tcc2/data/graph.net',
     DATA_DIR='/home/bruno/Dropbox/utfpr/tcc2/data/'
 )
+params = dict(
+    TESTING_PERCENTAGE=25.0
+)

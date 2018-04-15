@@ -11,9 +11,10 @@ import config
 
 BOTTLENECK_PATH = config.paths['BOTTLENECK_PATH']
 DATA_DIR = config.paths['DATA_DIR']
+TESTING_PERCENTAGE = config.params['TESTING_PERCENTAGE']
 
 
-def save_graph_as_dict(graph=None, file_name=join(DATA_DIR, 'graph.pkl')):
+def save_graph_as_dict(graph=None, file_name=join(DATA_DIR, 'ind.voc2012.graph')):
     """
     Saves a graph as a defaultdict(list) in the format {index: [index_of_neighbor_nodes]} as a pickle file.
     """
@@ -23,15 +24,6 @@ def save_graph_as_dict(graph=None, file_name=join(DATA_DIR, 'graph.pkl')):
     
     with open(file_name, 'wb') as output:
         pickle.dump(adj_dict, output, pickle.HIGHEST_PROTOCOL)
-
-
-def load_object(object_path=None):
-    """
-    Loads an objects in pickle format.
-    """
-    with open(object_path, 'rb') as input_:
-        graph_dict = pickle.load(input_)
-        return graph_dict
 
 
 def label_to_one_hot(label=None):
@@ -58,9 +50,12 @@ def get_one_hot_labels_list(labels_list=None):
     return one_hot_labels
 
 
-def save_one_hot_labels_list(one_hot_labels_list=None, file_name=join(DATA_DIR, "one_hot_labels_list.pkl")):
+def save_one_hot_labels_list(one_hot_labels_list=None, file_name=join(DATA_DIR, "ind.voc2012.y")):
+    testing_size = int(len(one_hot_labels_list) * (TESTING_PERCENTAGE/100))
     with open(file_name, 'wb') as output:
-        pickle.dump(one_hot_labels_list, output, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(one_hot_labels_list[testing_size:], output, pickle.HIGHEST_PROTOCOL)
+    with open(file_name.replace('ind.voc2012.y', 'ind.voc2012.ty'), 'wb') as output:
+        pickle.dump(one_hot_labels_list[:testing_size], output, pickle.HIGHEST_PROTOCOL)
 
 
 def get_global_class(sub_class=None):
@@ -136,10 +131,11 @@ def plot_graph(graph=None):
     igraph.plot(graph,**visual_style)
 
 
-def save_feature_list(size=0, file_name=join(DATA_DIR, 'features.pkl')):
+def save_feature_list(size=0, file_name=join(DATA_DIR, 'ind.voc2012.x')):
     """
-    Saves all freature array as a sparse matrix.
+    Saves all features array as a sparse matrix.
     """
+    testing_size = int(size * (TESTING_PERCENTAGE/100))
     bottlenecks = load_bottlenecks()
     out_list = []
     for i in range(size):
@@ -147,8 +143,11 @@ def save_feature_list(size=0, file_name=join(DATA_DIR, 'features.pkl')):
             for line in input_.readlines():
                 aux = [float(value) for value in line.split(",")]
                 out_list.append(aux)
-    
-    out_list = sparse.csr_matrix(out_list) 
-          
+
+    out_list = sparse.csr_matrix(out_list[testing_size:])
+    tx = sparse.csr_matrix(out_list[:testing_size])
+
     with open(file_name, 'wb') as output:
         pickle.dump(out_list, output, pickle.HIGHEST_PROTOCOL)
+    with open(file_name.replace('ind.voc2012.x', 'ind.voc2012.tx'), 'wb') as output:
+        pickle.dump(tx, output, pickle.HIGHEST_PROTOCOL)
