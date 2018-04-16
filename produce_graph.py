@@ -1,13 +1,10 @@
 from igraph import *
 from bcutils import (
-    save_graph_as_dict, 
     get_one_hot_labels_list,
     get_all_bound_boxes,
-    save_one_hot_labels_list,
-    save_feature_list
+    generate_inputs_files
     )
 from bcloader import load_xmls
-from os.path import join
 import config
 
 XML_DIR = config.paths['XML_DIR']
@@ -19,6 +16,7 @@ if __name__ == '__main__':
 
     print('Building the graph. Please wait...')
     NUMBER_OF_VERTICES = len(all_bndboxes)
+
     LABELS = [bndbox.sub_class for bndbox in all_bndboxes]    
     graph = Graph()
     graph.add_vertices(NUMBER_OF_VERTICES)
@@ -26,12 +24,10 @@ if __name__ == '__main__':
     graph.vs['label'] = LABELS
     print('\t[DONE]')
 
+    # saving files
+
     one_hot_labels = get_one_hot_labels_list(labels_list=LABELS)
-    # saving files 
-    save_one_hot_labels_list(one_hot_labels_list=one_hot_labels)
-    save_graph_as_dict(graph=graph)
-    save_feature_list(size=NUMBER_OF_VERTICES)
-    graph.write_graphmlz(join(DATA_DIR, 'graph.net'))
+    generate_inputs_files(graph=graph, one_hot_labels_list=one_hot_labels)
 
     
   
