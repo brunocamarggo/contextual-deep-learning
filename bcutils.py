@@ -142,12 +142,23 @@ def plot_graph(graph=None):
 
 
 def save_object(file_name=None, object_=None):
+    """
+    Saves an object as pickle format
+    :param file_name: name to save the file
+    :param object_: the object to be saved
+    :return: None
+    """
     with open(file_name, 'wb') as output:
         pickle.dump(object_, output, protocol=2)
         output.close()
 
 
 def load_bottleneck_values(bottleneck_file=None):
+    """
+    Reads a bottleneck file and returns the float values gifts inside it.
+    :param bottleneck_file:
+    :return: A list with the float values of a bottleneck file.
+    """
     values = []
     with open(join(BOTTLENECK_PATH, bottleneck_file), 'r') as input_:
         for line in input_.readlines():
@@ -158,6 +169,12 @@ def load_bottleneck_values(bottleneck_file=None):
 
 
 def compare_labels(bottleneck_file=None, other=None):
+    """
+    Compare if two classes are equals.
+    :param bottleneck_file: bottleneck file name
+    :param other: Another class name to compare
+    :return: None
+    """
     bottleneck_name = bottleneck_file.split('_')[3].replace('.jpg', '').replace('.txt', '')
     global_class = get_global_class(sub_class=bottleneck_name)
     if global_class != other:
@@ -181,7 +198,15 @@ def generate_inputs_files(dataset_name='voc2012', graph=None, one_hot_labels_lis
     list of features testing instances = tx
     list of the indices of test instances in graph = test.index
     Graph, a dict in the format {index: [index_of_neighbor_nodes]}
+
+    :param dataset_name: dataset name
+    :param graph: an igraph Object
+    :param one_hot_labels_list: list of all one-hot labels
+    :return: None
     """
+    """
+       
+        """
     graph.write_graphmlz(join(DATA_DIR, 'graph.net'))
     save_graph_as_dict(graph=graph)
     testing_size = int(len(one_hot_labels_list) * (TESTING_PERCENTAGE / 100))
@@ -220,7 +245,7 @@ def generate_inputs_files(dataset_name='voc2012', graph=None, one_hot_labels_lis
     testing_features_list = []
     training_features_list = []
     for k, i in enumerate(indices_of_test_instances):
-        # Comparing the labels 
+        # Comparing the labels
         compare_labels(bottleneck_file=bottlenecks[i], other=testing_one_hot_to_label_list[k])
         bottlenecks_values = load_bottleneck_values(bottleneck_file=bottlenecks[i])
         for values in bottlenecks_values:
