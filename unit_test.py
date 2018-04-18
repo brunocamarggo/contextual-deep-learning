@@ -1,8 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import unittest
 from bcloader import *
 import scipy
 import numpy
 import collections
+import config
+
+DATA_DIR = config.paths['DATA_DIR']
 
 
 class TestSequentialInput(unittest.TestCase):
@@ -28,9 +33,9 @@ class TestSequentialInput(unittest.TestCase):
             for obj in xml.objects:
                 if len(graph_labels) == index:
                     break
-                bottleneck_name = bottlenecks[index].split('_')[3].replace('.jpg','').replace('.txt', '')
-                jpg_img_name = bndboxes_jpg[index].split('_')[0] + '_'+ bndboxes_jpg[index].split('_')[1]
-                jpg_bb_class = bndboxes_jpg[index].split('_')[3].replace('.jpg','')
+                bottleneck_name = bottlenecks[index].split('_')[3].replace('.jpg', '').replace('.txt', '')
+                jpg_img_name = bndboxes_jpg[index].split('_')[0] + '_' + bndboxes_jpg[index].split('_')[1]
+                jpg_bb_class = bndboxes_jpg[index].split('_')[3].replace('.jpg', '')
                 test = (jpg_bb_class == obj.name == bottleneck_name == graph_labels[index])
                 
                 if not test:
@@ -42,31 +47,41 @@ class TestSequentialInput(unittest.TestCase):
         self.assertTrue(result)
 
     def test_input_types(self):
-        # x
+        input_files = [f for f in listdir(DATA_DIR) if isfile(join(DATA_DIR, f))]
         result = True
-        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.x')
-        if type(object_) != scipy.sparse.csr.csr_matrix:
-            result = False
-        # tx
-        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.tx')
-        if type(object_) != scipy.sparse.csr.csr_matrix:
-            result = False
-        # y
-        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.y')
-        if type(object_) != numpy.ndarray:
-            result = False
-        # ty
-        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.ty')
-        if type(object_) != numpy.ndarray:
-            result = False
-        # graph
-        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.graph')
-        if type(object_) != collections.defaultdict:
-            result = False
-        # test.index
-        object_ = load_object(object_path='/home/bruno/Dropbox/utfpr/tcc2/data/ind.voc2012.test.index')
-        if type(object_) != list:
-            result = False
+        for f in input_files:
+            if f.endswith('.x'):
+                object_ = load_object(object_path=join(DATA_DIR, f))
+                if type(object_) != scipy.sparse.csr.csr_matrix:
+                    result = False
+            elif f.endswith('.tx'):
+                object_ = load_object(object_path=join(DATA_DIR, f))
+                if type(object_) != scipy.sparse.csr.csr_matrix:
+                    result = False
+            elif f.endswith('.allx'):
+                object_ = load_object(object_path=join(DATA_DIR, f))
+                if type(object_) != scipy.sparse.csr.csr_matrix:
+                    result = False
+            elif f.endswith('.y'):
+                object_ = load_object(object_path=join(DATA_DIR, f))
+                if type(object_) != numpy.ndarray:
+                    result = False
+            elif f.endswith('.ty'):
+                object_ = load_object(object_path=join(DATA_DIR, f))
+                if type(object_) != numpy.ndarray:
+                    result = False
+            elif f.endswith('.ally'):
+                object_ = load_object(object_path=join(DATA_DIR, f))
+                if type(object_) != numpy.ndarray:
+                    result = False
+            elif f.endswith('.graph'):
+                object_ = load_object(object_path=join(DATA_DIR, f))
+                if type(object_) != collections.defaultdict:
+                    result = False
+            elif f.endswith('.test.index'):
+                object_ = load_object(object_path=join(DATA_DIR, f))
+                if type(object_) != list:
+                    result = False
         self.assertTrue(result)
 
 

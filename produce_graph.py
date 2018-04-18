@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from igraph import *
 from bcutils import (
     get_one_hot_labels_list,
@@ -12,7 +14,7 @@ DATA_DIR = config.paths['DATA_DIR']
 
 if __name__ == '__main__':
     all_xmls = load_xmls(path=XML_DIR)  
-    all_bndboxes, edges_list = get_all_bound_boxes(all_xmls[:1500])
+    all_bndboxes, edges_list = get_all_bound_boxes(all_xmls[:100])
 
     print('Building the graph. Please wait...')
     NUMBER_OF_VERTICES = len(all_bndboxes)

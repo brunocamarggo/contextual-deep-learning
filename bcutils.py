@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import pickle
 from collections import defaultdict
 import itertools
@@ -6,9 +8,9 @@ import igraph
 import numpy as np
 from bcloader import load_bottlenecks
 from scipy import sparse 
-from os.path import isfile, join
+from os.path import join
 import config
-import random
+from sklearn.model_selection import train_test_split
 
 BOTTLENECK_PATH = config.paths['BOTTLENECK_PATH']
 DATA_DIR = config.paths['DATA_DIR']
@@ -19,12 +21,24 @@ def save_graph_as_dict(graph=None, file_name='ind.voc2012.graph'):
     """
     Saves a graph as a defaultdict(list) in the format {index: [index_of_neighbor_nodes]} as a pickle file.
     """
-    adj_dict =  defaultdict(list)
+    adj_dict = defaultdict(list)
     for i, adjlist in enumerate(graph.get_adjlist()):
         adj_dict[i] = adjlist
 
     save_object(file_name=join(DATA_DIR, file_name), object_=adj_dict)
 
+
+def global_class_to_one_hot(global_class):
+    if global_class == 'Person':
+        return [1, 0, 0, 0]
+    elif global_class == 'Animal':
+        return [0, 1, 0, 0]
+    elif global_class == 'Vehicle':
+        return [0, 0, 1, 0]
+    elif global_class == 'Indoor':
+        return [0, 0, 0, 1]
+    else:
+        raise Exception('The global class "' + global_class + '" cant be transform to one-hot format')
 
 def label_to_one_hot(label=None):
     """
@@ -181,6 +195,19 @@ def compare_labels(bottleneck_file=None, other=None):
         raise Exception('Feature representation not matching with one-hot representation')
 
 
+def verify_labels_order(x_test_indices=None, graph_labels=None, y_test_labels=None):
+    """
+    Verifies if the labels of graph, x_test_indices and y_test_labels are the same.
+    """
+    test = True
+    for k, i in enumerate(x_test_indices):
+        if get_global_class(sub_class=graph_labels[i]) != y_test_labels[k]:
+            test = False
+            break
+    if not test:
+        raise Exception('Label from graph does not match with testing data')
+
+
 def generate_inputs_files(dataset_name='voc2012', graph=None, one_hot_labels_list=None):
     """
     Produces all input files required to use Thomas N. Kipf and Max Welling implementation of Graph Convolutional
@@ -204,70 +231,49 @@ def generate_inputs_files(dataset_name='voc2012', graph=None, one_hot_labels_lis
     :param one_hot_labels_list: list of all one-hot labels
     :return: None
     """
-    """
-       
-        """
     graph.write_graphmlz(join(DATA_DIR, 'graph.net'))
-    save_graph_as_dict(graph=graph)
-    testing_size = int(len(one_hot_labels_list) * (TESTING_PERCENTAGE / 100))
-    indexs = [i for i in range(len(one_hot_labels_list))]
-    testing_one_hot_list = []
-    training_one_hot_list = []
-    indices_of_test_instances = []
+    indices = [i for i in range(len(one_hot_labels_list))]
 
-    # Generatiing random testing instances
-    for i in range(testing_size):
-        r_index = random.choice(indexs)
-        indices_of_test_instances.append(r_index)
-        testing_one_hot_list.append(one_hot_labels_list[r_index])
-        indexs.remove(r_index)
-    for i in indexs:
-        training_one_hot_list.append(one_hot_labels_list[i])
-    # Getting the labels for compare with the feature representation label. They must be equals (ensuring same order)
-    training_one_hot_to_label_list = []
-    for one_hot in training_one_hot_list:
-        training_one_hot_to_label_list.append(one_hot_to_label(one_hot=one_hot))
-    testing_one_hot_to_label_list = []
-    for one_hot in testing_one_hot_list:
-        testing_one_hot_to_label_list.append(one_hot_to_label(one_hot=one_hot))
+    y = []
+    for one_hot in one_hot_labels_list:
+        y.append(one_hot_to_label(one_hot=one_hot))
 
-    # Transforming list to numpy array representation
-    training_one_hot_list = np.array(training_one_hot_list)
-    testing_one_hot_list = np.array(testing_one_hot_list)
-
-    # Saving the objects
-    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.test.index'), object_=indices_of_test_instances)
-    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.y'), object_=training_one_hot_list)
-    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.ty'), object_=testing_one_hot_list)
-
-    # Once done with the one-hot representation list (x), let's go to features representation lists (y).
     bottlenecks = load_bottlenecks()
-    testing_features_list = []
-    training_features_list = []
-    for k, i in enumerate(indices_of_test_instances):
-        # Comparing the labels
-        compare_labels(bottleneck_file=bottlenecks[i], other=testing_one_hot_to_label_list[k])
+    X = []
+    for k, i in enumerate(indices):
+        compare_labels(bottleneck_file=bottlenecks[i], other=y[k])
         bottlenecks_values = load_bottleneck_values(bottleneck_file=bottlenecks[i])
         for values in bottlenecks_values:
-            testing_features_list.append(values)
-    testing_features_list = sparse.csr_matrix(testing_features_list)
+            X.append(values)
 
-    for k, i in enumerate(indexs):
-        compare_labels(bottleneck_file=bottlenecks[i], other=training_one_hot_to_label_list[k])
-        bottlenecks_values = load_bottleneck_values(bottleneck_file=bottlenecks[i])
-        for values in bottlenecks_values:
-            training_features_list.append(values)
-    training_features_list = sparse.csr_matrix(training_features_list)
+    allx, tx, ally, ty, allx_indices, X_test_indices = train_test_split(X, y, indices, stratify=y,
+                                                                        test_size=TESTING_PERCENTAGE)
+    ally = [global_class_to_one_hot(global_class=ally_) for ally_ in ally]
+    labels = graph.vs['label']
+    verify_labels_order(graph_labels=labels, y_test_labels=ty, x_test_indices=X_test_indices)
 
-    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.x'), object_=training_features_list)
-    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.tx'), object_=testing_features_list)
+    ty = [global_class_to_one_hot(global_class=ty_) for ty_ in ty]
 
-    print('******************************************')
-    print('TOTAL: {}\nTRAINING SIZE: {}\nTESTING SIZE: {} ({})'.format(len(one_hot_labels_list),
-                                                                       training_features_list.shape[0],
-                                                                       testing_features_list.shape[0],
-                                                                       str(TESTING_PERCENTAGE)+'%'))
-    print('******************************************')
+    allx_indices = [i for i in range(len(allx_indices))]
+    # x e y are samples with labels from training data
+    #  x_ e y_ are samples with no labels from training data
+    x_, x, y_, y, x_train_indices, x_test_indices = train_test_split(allx, ally, allx_indices, stratify=ally,
+                                                                     test_size=TESTING_PERCENTAGE)
+    x = sparse.csr_matrix(x)
+    tx = sparse.csr_matrix(tx)
+    allx = sparse.csr_matrix(allx)
+    y = np.array(y)
+    ty = np.array(ty)
+    ally = np.array(ally)
+
+    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.x'), object_=x)
+    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.tx'), object_=tx)
+    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.allx'), object_=allx)
+    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.y'), object_=y)
+    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.ty'), object_=ty)
+    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.ally'), object_=ally)
+    save_object(file_name=join(DATA_DIR, 'ind.' + dataset_name + '.test.index'), object_=X_test_indices)
+    save_graph_as_dict(graph=graph)
 
 
 
