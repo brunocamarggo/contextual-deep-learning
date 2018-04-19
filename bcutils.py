@@ -29,6 +29,9 @@ def save_graph_as_dict(graph=None, file_name='ind.voc2012.graph'):
 
 
 def global_class_to_one_hot(global_class):
+    """
+    Returns one-hot representation of a global class.
+    """
     if global_class == 'Person':
         return [1, 0, 0, 0]
     elif global_class == 'Animal':
