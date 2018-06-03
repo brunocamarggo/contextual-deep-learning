@@ -27,6 +27,9 @@ import tensorflow as tf
 from tensorflow.python.platform import gfile
 import config
 
+from os import listdir
+from os.path import join
+
 DATA_URL = 'http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz'
 BOTTLENECK_TENSOR_NAME = 'pool_3/_reshape:0'
 BOTTLENECK_TENSOR_SIZE = 2048
@@ -38,28 +41,40 @@ RESIZED_INPUT_TENSOR_NAME = 'ResizeBilinear:0'
 MAX_NUM_IMAGES_PER_CLASS = 2 ** 27 - 1  # ~134M
 
 MODEL_DIR = 'inception'
-BOUND_BOX_PATH = config.paths['BOUND_BOX_PATH']
-BOTTLENECK_PATH = config.paths['BOTTLENECK_PATH']
+BOUND_BOX_PATH = config.paths['IMG_DIR_SYNTHETIC']
+BOTTLENECK_PATH = config.paths['BOTTLENECK_PATH_SYNTHETIC']
 
 
 def create_bottleneck_file(sess, jpeg_data_tensor, bottleneck_tensor):
     file_list = []
-    file_glob = os.path.join(BOUND_BOX_PATH, '*.jpg')
+
+    file_glob = os.path.join(config.paths['IMG_DIR_SYNTHETIC'], '*.jpg')
     file_list.extend(gfile.Glob(file_glob))
 
     file_list = sorted(file_list)
+    error_list = []
     for i, image in enumerate(file_list):
+        #print(image)
         if i % 100 == 0:
             print("{}/{} files processed.".format(i, len(file_list)))
         # getting the name of the training image
         image_name = str(image).split('/')[-1]
 
         path = os.path.join(BOTTLENECK_PATH, image_name+'.txt')
-        image_data = gfile.FastGFile(image, 'rb').read()
-        bottleneck_values = run_bottleneck_on_image(sess, image_data, jpeg_data_tensor, bottleneck_tensor)
-        bottleneck_string = ','.join(str(x) for x in bottleneck_values)
-        with open(path, 'w') as bottleneck_file:
-            bottleneck_file.write(bottleneck_string)
+        try:
+            image_data = gfile.FastGFile(image, 'rb').read()
+            bottleneck_values = run_bottleneck_on_image(sess, image_data, jpeg_data_tensor, bottleneck_tensor)
+            bottleneck_string = ','.join(str(x) for x in bottleneck_values)
+            with open(path, 'w') as bottleneck_file:
+                bottleneck_file.write(bottleneck_string)
+        except:
+            error_list.append(image)
+
+
+    print('ERROR LIST')
+    for err in error_list:
+        print(err)
+    print('end error list')
     print('All bottleneck were create.')
 
 

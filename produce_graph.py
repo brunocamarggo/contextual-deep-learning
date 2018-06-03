@@ -13,8 +13,9 @@ XML_DIR = config.paths['XML_DIR']
 DATA_DIR = config.paths['DATA_DIR']
 
 if __name__ == '__main__':
-    all_xmls = load_xmls(path=XML_DIR)  
-    all_bndboxes, edges_list = get_all_bound_boxes(all_xmls[:100])
+    all_xmls = load_xmls(path=XML_DIR)
+    # 1500 - best
+    all_bndboxes, edges_list = get_all_bound_boxes(all_xmls[:1500])
 
     print('Building the graph. Please wait...')
     NUMBER_OF_VERTICES = len(all_bndboxes)

@@ -43,6 +43,7 @@ def global_class_to_one_hot(global_class):
     else:
         raise Exception('The global class "' + global_class + '" cant be transform to one-hot format')
 
+
 def label_to_one_hot(label=None):
     """
         Returns a label in format one-hot.
@@ -79,7 +80,7 @@ def one_hot_to_label(one_hot=None):
 
 def get_one_hot_labels_list(labels_list=None):
     """
-    Returns a list of all one-hot represetation from a list with labels.
+    Returns a list of all one-hot representation from a list with labels.
     """
     one_hot_labels = np.array([label_to_one_hot(label=label) for label in labels_list])
     return one_hot_labels
@@ -98,7 +99,28 @@ def get_global_class(sub_class=None):
     elif sub_class in ['bottle', 'chair', 'diningtable', 'pottedplant', 'sofa', 'tvmonitor']:
         return 'Indoor'
     else:
-        raise Exception('The sub_class "'+ sub_class +'" cant be transform to no one global class')
+        raise Exception('The sub_class "' + sub_class + '" cant be transform to no one global class')
+
+def get_global_class_MIT67(subclass=None):
+    # auditorium, church_inside
+    if subclass in ['bakery', 'grocerystore', 'clothingstore', 'deli',
+               'laundromat', 'jewelleryshop', 'bookstore', 'videostore', 'florist', 'shoeshop', 'mall', 'toystore']:
+        return 'Store'
+    elif subclass in ['bedroom', 'nursery', 'closet', 'pantry', 'children_room', 'lobby', 'dining_room', 'corridor',
+                    'livingroom', 'bathroom', 'kitchen', 'stairscase', 'winecellar', 'garage']:
+        return 'Home'
+    elif subclass in ['auditorium', 'prisoncell', 'church_inside', 'library', 'cloister', 'church', 'waitingroom', 'museum', 'elevator', 'poolinside',
+                      'inside_bus', 'inside_subway', 'subway', 'locker_room', 'trainstation', 'airport_inside']:
+        return 'Public spaces'
+    elif subclass in ['buffet', 'fastfood_restaurant', 'concert_hall', 'restaurant', 'bar', 'movietheater', 'gameroom', 'casino',
+                      'bowling', 'gym', 'hairsalon']:
+        return 'Leisure'
+    elif subclass in ['hospitalroom', 'kindergarden', 'restaurant_kitchen', 'artstudio', 'classroom', 'laboratorywet',
+                      'studiomusic', 'operating_room', 'office', 'computerroom', 'warehouse', 'greenhouse',
+                      'dentaloffice', 'tv_studio', 'meeting_room']:
+        return 'Working place'
+    else:
+        raise Exception('The subclass "' + subclass + '" cant be transform to no one global class (MIT67).')
 
 
 def remove_duplicate_edges(vertex_list):
@@ -170,14 +192,14 @@ def save_object(file_name=None, object_=None):
         output.close()
 
 
-def load_bottleneck_values(bottleneck_file=None):
+def load_bottleneck_values(bottlenecskpath=BOTTLENECK_PATH, bottleneck_file=None):
     """
     Reads a bottleneck file and returns the float values gifts inside it.
     :param bottleneck_file:
     :return: A list with the float values of a bottleneck file.
     """
     values = []
-    with open(join(BOTTLENECK_PATH, bottleneck_file), 'r') as input_:
+    with open(join(bottlenecskpath, bottleneck_file), 'r') as input_:
         for line in input_.readlines():
             aux = [float(value) for value in line.split(",")]
             values.append(aux)
@@ -251,10 +273,10 @@ def generate_inputs_files(dataset_name='voc2012', graph=None, one_hot_labels_lis
 
     allx, tx, ally, ty, allx_indices, X_test_indices = train_test_split(X, y, indices, stratify=y,
                                                                         test_size=TESTING_PERCENTAGE)
+
     ally = [global_class_to_one_hot(global_class=ally_) for ally_ in ally]
     labels = graph.vs['label']
     verify_labels_order(graph_labels=labels, y_test_labels=ty, x_test_indices=X_test_indices)
-
     ty = [global_class_to_one_hot(global_class=ty_) for ty_ in ty]
 
     allx_indices = [i for i in range(len(allx_indices))]
